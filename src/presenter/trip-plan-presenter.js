@@ -1,26 +1,33 @@
-import FilterForm from '../view/filter-form';
-import SortForm from '../view/sort-form';
-import WaypointForm from '../view/waypoint-form';
-import Waypoint from '../view/waypoint';
+import FilterForm from '../view/filter';
+import SortForm from '../view/sort';
+import PointForm from '../view/point-form';
+import PointsList from '../view/points-list';
+import Point from '../view/point';
 import { render } from '../render';
+import { getDefaultPoint } from '../const';
 
 export default class TripPlanPresenter {
-  filterFormComponent = new FilterForm();
-  sortFormComponent = new SortForm();
-  waypointFormComponent = new WaypointForm();
+  pointsListComponent = new PointsList();
 
-  constructor() {
-    this.filterContainer = document.querySelector('.trip-controls__filters');
-    this.eventsContainer = document.querySelector('.trip-events');
+  constructor(headerContainer, mainContainer, pointModel) {
+    this.filterContainer = headerContainer;
+    this.eventsContainer = mainContainer;
+    this.pointModel = pointModel;
   }
 
   init() {
-    render(this.filterFormComponent, this.filterContainer);
-    render(this.sortFormComponent, this.eventsContainer);
-    render(this.waypointFormComponent, this.eventsContainer);
+    const points = this.pointModel.getPoints();
+    const destinations = this.pointModel.getDestinations();
+    const offers = this.pointModel.getOffers();
 
-    for (let i = 0; i < 3; i++) {
-      render(new Waypoint(), this.eventsContainer);
+    render(new FilterForm(), this.filterContainer);
+    render(new SortForm(), this.eventsContainer);
+    render(this.pointsListComponent, this.eventsContainer);
+    render(new PointForm(getDefaultPoint(), destinations, offers), this.pointsListComponent.element);
+    render(new PointForm(points[1], destinations, offers), this.pointsListComponent.element);
+
+    for (const point of points) {
+      render(new Point({ point, destinations, offers}), this.pointsListComponent.element);
     }
   }
 }

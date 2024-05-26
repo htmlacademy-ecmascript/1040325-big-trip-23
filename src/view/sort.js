@@ -39,14 +39,14 @@ const createSortItemTemplate = ({label, id, initialValue, className}) => `
     <label class="trip-sort__btn" for="${id}">${label}</label>
   </div>`;
 
-const createSortFormTemplate = () => `
+const createSortTemplate = () => `
 <form class="trip-events__trip-sort  trip-sort" action="#" method="get">
   ${SORT_ITEMS.map((item) => createSortItemTemplate(item)).join('\n')}
 </form>`;
 
 export default class SortForm {
   getTemplate() {
-    return createSortFormTemplate();
+    return createSortTemplate();
   }
 
   getElement() {
