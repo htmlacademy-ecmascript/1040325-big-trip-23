@@ -30,7 +30,7 @@ const createFilterItemTemplate = ({label, id, initialValue}) => `
   </div>`;
 
 
-const createFilterFormTemplate = () => `
+const createFilterTemplate = () => `
 <form class="trip-filters" action="#" method="get">
   ${FILTER_ITEMS.map((item) => createFilterItemTemplate(item)).join('\n')}
 
@@ -39,7 +39,7 @@ const createFilterFormTemplate = () => `
 
 export default class FilterForm {
   getTemplate() {
-    return createFilterFormTemplate();
+    return createFilterTemplate();
   }
 
   getElement() {
