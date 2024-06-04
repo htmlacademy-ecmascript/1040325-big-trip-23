@@ -1,5 +1,5 @@
+import AbstractView from '../framework/view/abstract-view.js';
 import { capitalize } from '../helpers';
-import { createElement} from '../render';
 import { EVENT_TYPES } from '../const';
 import { getTime, getDateSeparatedBySlash } from '../helpers';
 
@@ -116,27 +116,36 @@ const createPointFormTemplate = (point, destinations, offers) => {
 </li>`;
 };
 
-export default class PointForm {
-  constructor(point, destinations, offers) {
-    this.point = point;
-    this.destinations = destinations;
-    this.offers = offers;
+export default class PointForm extends AbstractView {
+  #point = null;
+  #destinations = null;
+  #offers = null;
+  #handleFormCancel = null;
+  #handleFormSubmit = null;
+
+  constructor({point, destinations, offers, onFormCancel, onFormSubmit}) {
+    super();
+    this.#point = point;
+    this.#destinations = destinations;
+    this.#offers = offers;
+    this.#handleFormCancel = onFormCancel;
+    this.#handleFormSubmit = onFormSubmit;
+
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#formCancelHandler);
+    this.element.querySelector('.event__save-btn').addEventListener('click', this.#formSubmitHandler);
   }
 
-  getTemplate() {
-    return createPointFormTemplate(this.point, this.destinations, this.offers);
+  get template() {
+    return createPointFormTemplate(this.#point, this.#destinations, this.#offers);
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
-    }
+  #formCancelHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleFormCancel();
+  };
 
-    return this.element;
-  }
-
-  removeElement() {
-    this.element = null;
-  }
-
+  #formSubmitHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleFormSubmit();
+  };
 }
