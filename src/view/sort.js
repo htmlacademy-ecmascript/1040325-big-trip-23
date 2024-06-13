@@ -11,7 +11,8 @@ const SORT_ITEMS = [
     label: 'Event',
     id: 'sort-event',
     initialValue: 'sort-event',
-    className: 'trip-sort__item--event'
+    className: 'trip-sort__item--event',
+    disabled: true,
   },
   {
     label: 'Time',
@@ -29,13 +30,15 @@ const SORT_ITEMS = [
     label: 'Offers',
     id: 'sort-offer',
     initialValue: 'sort-offer',
-    className: 'trip-sort__item--offer'
+    className: 'trip-sort__item--offer',
+    disabled: true,
   },
 ];
 
-const createSortItemTemplate = ({label, id, initialValue, className}) => `
+const createSortItemTemplate = ({label, id, initialValue, disabled = false, className}) => `
   <div class="trip-sort__item  ${className}">
-    <input id="${id}" class="trip-sort__input  visually-hidden" type="radio" name="trip-sort" value="${initialValue}">
+    <input id="${id}" class="trip-sort__input visually-hidden" type="radio" name="trip-sort" value="${initialValue}" ${disabled ? 'disabled' : ''}>
+
     <label class="trip-sort__btn" for="${id}">${label}</label>
   </div>`;
 
@@ -45,8 +48,21 @@ const createSortTemplate = () => `
 </form>`;
 
 export default class SortForm extends AbstractView {
+  #handleSortTypeChange = null;
+
+  constructor({onSortTypeChange}) {
+    super();
+    this.#handleSortTypeChange = onSortTypeChange;
+    this.element.addEventListener('change', this.#sortTypeChangeHandler);
+  }
+
   get template() {
     return createSortTemplate();
   }
+
+  #sortTypeChangeHandler = (evt) => {
+    this.#handleSortTypeChange(evt.target.value);
+  };
 }
+
 

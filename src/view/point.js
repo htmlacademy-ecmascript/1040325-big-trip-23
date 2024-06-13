@@ -1,6 +1,8 @@
 import AbstractView from '../framework/view/abstract-view.js';
-import { getDate, getDateTime, getHumanDate, getTime, getDateDuration } from '../helpers';
+import { getDate, getDateDuration } from '../helpers';
 import { capitalize } from '../helpers';
+import { DateFormats } from '../const.js';
+import { remove } from '../framework/render.js';
 
 const createPointTemplate = (point, destinations, offers) => {
   const {basePrice, dateFrom, dateTo, isFavorite} = point;
@@ -11,16 +13,16 @@ const createPointTemplate = (point, destinations, offers) => {
 
   return `<li class="trip-events__item">
   <div class="event">
-    <time class="event__date" datetime="${getDate(dateFrom)}">${getHumanDate(dateFrom)}</time>
+    <time class="event__date" datetime="${getDate(dateFrom, DateFormats.DATE)}">${getDate(dateFrom, DateFormats.MONTH_DAY)}</time>
     <div class="event__type">
       <img class="event__type-icon" width="42" height="42" src="img/icons/${point.type}.png" alt="Event type icon">
     </div>
     <h3 class="event__title">${capitalize(point.type)} ${pointDestination}</h3>
     <div class="event__schedule">
       <p class="event__time">
-        <time class="event__start-time" datetime="${getDateTime(dateFrom)}">${getTime(dateFrom)}</time>
+        <time class="event__start-time" datetime="${getDate(dateFrom, DateFormats.DATE_TIME)}">${getDate(dateFrom, DateFormats.TIME)}</time>
         &mdash;
-        <time class="event__end-time" datetime="${getDateTime(dateTo)}">${getTime(dateTo)}</time>
+        <time class="event__end-time" datetime="${getDate(dateTo, DateFormats.DATE_TIME)}">${getDate(dateTo, DateFormats.TIME)}</time>
       </p>
       <p class="event__duration">${getDateDuration(dateFrom, dateTo)}</p>
     </div>
@@ -57,15 +59,18 @@ export default class Point extends AbstractView {
   #destinations = null;
   #offers = null;
   #handleEditClick = null;
+  #handleFavoriteButtonClick = null;
 
-  constructor({point, destinations, offers, onEditClick}) {
+  constructor({point, destinations, offers, onEditClick, onFavoriteButtonClick}) {
     super();
     this.#point = point;
     this.#destinations = destinations;
     this.#offers = offers;
     this.#handleEditClick = onEditClick;
+    this.#handleFavoriteButtonClick = onFavoriteButtonClick;
 
     this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#editClickHandler);
+    this.element.querySelector('.event__favorite-btn').addEventListener('click', this.#favoriteButtonClickHandler);
   }
 
   get template() {
@@ -76,4 +81,14 @@ export default class Point extends AbstractView {
     evt.preventDefault();
     this.#handleEditClick();
   };
+
+  #favoriteButtonClickHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleFavoriteButtonClick();
+  };
+
+  remove = () => {
+    remove(this);
+  };
 }
+

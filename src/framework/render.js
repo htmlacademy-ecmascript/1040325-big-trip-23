@@ -38,6 +38,7 @@ function render(component, container, place = RenderPosition.BEFOREEND) {
   container.insertAdjacentElement(place, component.element);
 }
 
+
 /**
  * Функция для замены одного компонента на другой
  * @param {AbstractView} newComponent Компонент, который нужно показать

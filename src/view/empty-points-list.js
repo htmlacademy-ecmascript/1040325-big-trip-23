@@ -3,7 +3,7 @@ import { FilterEmptyMessages } from '../const';
 
 const createEpmtyListTemplate = (filter) => `<p class="trip-events__msg">${FilterEmptyMessages[filter]}</p>`;
 
-export default class PointsListEmptyView extends AbstractView {
+export default class EmptyPointsListView extends AbstractView {
   #filter = null;
 
   constructor ({ filter }) {

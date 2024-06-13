@@ -31,4 +31,10 @@ export default class PointModel {
   get filters() {
     return this.#filters;
   }
+
+  updatePoint(point) {
+    this.#points = this.#points.map((item) =>
+      item.id === point.id ? point : item
+    );
+  }
 }
