@@ -1,7 +1,9 @@
 import AbstractView from '../framework/view/abstract-view.js';
 import { capitalize } from '../helpers';
 import { EVENT_TYPES } from '../const';
-import { getTime, getDateSeparatedBySlash } from '../helpers';
+import { getDate } from '../helpers';
+import { DateFormats } from '../const.js';
+import { remove } from '../framework/render.js';
 
 const createTypesList = (pointId) => `<div class="event__type-wrapper">
   <label class="event__type  event__type-btn" for="event-type-toggle-${pointId}">
@@ -85,10 +87,10 @@ const createPointFormTemplate = (point, destinations, offers) => {
 
     <div class="event__field-group  event__field-group--time">
       <label class="visually-hidden" for="event-start-time-${pointId}">From</label>
-      <input class="event__input  event__input--time" id="event-start-time-${pointId}" type="text" name="event-start-time" value="${getDateSeparatedBySlash(dateFrom)} ${getTime(dateFrom)}">
+      <input class="event__input  event__input--time" id="event-start-time-${pointId}" type="text" name="event-start-time" value="${getDate(dateFrom, DateFormats.DATE_WITH_SLASH)} ${getDate(dateFrom, DateFormats.TIME)}">
       &mdash;
       <label class="visually-hidden" for="event-end-time-${pointId}">To</label>
-      <input class="event__input  event__input--time" id="event-end-time-${pointId}" type="text" name="event-end-time" value="${getDateSeparatedBySlash(dateTo)} ${getTime(dateTo)}">
+      <input class="event__input  event__input--time" id="event-end-time-${pointId}" type="text" name="event-end-time" value="${getDate(dateTo, DateFormats.DATE_WITH_SLASH)} ${getDate(dateTo, DateFormats.TIME)}">
     </div>
 
     <div class="event__field-group  event__field-group--price">
@@ -120,32 +122,45 @@ export default class PointForm extends AbstractView {
   #point = null;
   #destinations = null;
   #offers = null;
-  #handleFormCancel = null;
+  #handleFormClose = null;
   #handleFormSubmit = null;
 
-  constructor({point, destinations, offers, onFormCancel, onFormSubmit}) {
+  constructor({point, destinations, offers, onFormClose, onFormSubmit}) {
     super();
     this.#point = point;
     this.#destinations = destinations;
     this.#offers = offers;
-    this.#handleFormCancel = onFormCancel;
+    this.#handleFormClose = onFormClose;
     this.#handleFormSubmit = onFormSubmit;
 
-    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#formCancelHandler);
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#formCloseHandler);
     this.element.querySelector('.event__save-btn').addEventListener('click', this.#formSubmitHandler);
+
+    document.addEventListener('keydown', this.#escapeHandler);
   }
 
   get template() {
     return createPointFormTemplate(this.#point, this.#destinations, this.#offers);
   }
 
-  #formCancelHandler = (evt) => {
+  #formCloseHandler = (evt) => {
     evt.preventDefault();
-    this.#handleFormCancel();
+    this.#handleFormClose();
   };
 
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
     this.#handleFormSubmit();
+  };
+
+  #escapeHandler = (event) => {
+    if (event.key === 'Escape') {
+      this.#formCloseHandler(event);
+    }
+  };
+
+  remove = () => {
+    remove(this);
+    document.removeEventListener('keydown', this.#escapeHandler);
   };
 }

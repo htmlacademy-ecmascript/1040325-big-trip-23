@@ -1,23 +1,24 @@
 import FilterForm from '../view/filter';
 import SortForm from '../view/sort';
 import PointsList from '../view/points-list';
-import Point from '../view/point';
-import PointForm from '../view/point-form.js';
-import PointsListEmptyView from '../view/points-list-empty.js';
-import { render, replace } from '../framework/render.js';
+import EmptyPointsListView from '../view/empty-points-list.js';
+import { render } from '../framework/render.js';
+import PointPresenter from './point-presenter.js';
+import { sortByDay, sortByTime, sortByPrice } from '../helpers.js';
 
 export default class TripPlanPresenter {
   #pointsListComponent = new PointsList();
   #filterContainer = null;
   #eventsContainer = null;
   #pointModel = null;
-  #points = null;
+  #pointPresenters = new Map();
+  editingPointId = null;
+  #currentSortType = 'sort-day';
 
   constructor(headerContainer, mainContainer, pointModel) {
     this.#filterContainer = headerContainer;
     this.#eventsContainer = mainContainer;
     this.#pointModel = pointModel;
-    this.#points = this.#pointModel.points;
   }
 
   init() {
@@ -26,65 +27,91 @@ export default class TripPlanPresenter {
   }
 
   #renderPointsList() {
-    if(this.#points.length === 0) {
-      this.#renderPointsListEmpty();
+    if (this.#pointModel.points.length === 0) {
+      this.#renderEmptyPointsList();
       return;
     }
 
     this.#renderSortForm();
     render(this.#pointsListComponent, this.#eventsContainer);
+    this.#sortPoints(this.#currentSortType);
+    this.#renderPoints();
+  }
 
-    for (const point of this.#points) {
-      this.#renderPoint(point, this.#pointModel.destinations, this.#pointModel.offers);
+  #renderPoints() {
+    for (const point of this.#pointModel.points) {
+      this.#renderPoint(point);
     }
   }
 
   #renderSortForm() {
-    render(new SortForm(), this.#eventsContainer);
+    render(new SortForm({onSortTypeChange: this.#onSortTypeChange}), this.#eventsContainer);
   }
 
-  #renderPointsListEmpty() {
-    render(new PointsListEmptyView({filter: this.#pointModel.filters[0]}), this.#eventsContainer);
+  #renderEmptyPointsList() {
+    render(
+      new EmptyPointsListView({ filter: this.#pointModel.filters[0] }),
+      this.#eventsContainer
+    );
   }
 
-  #renderPoint(point, destinations, offers) {
-    const escKeyDownHandler = (evt) => {
-      if(evt.key === 'Escape') {
-        evt.preventDefault();
-        replaceEditFormToPoint();
-        document.removeEventListener('keydown', escKeyDownHandler);
-      }
-    };
-    const pointComponent = new Point({
-      point,
-      destinations,
-      offers,
-      onEditClick: () => {
-        replacePointToEditForm();
-        document.addEventListener('keydown', escKeyDownHandler);
-      }});
+  updatePoint = (point) => {
+    this.#pointModel.updatePoint(point);
 
-    const pointEditComponent = new PointForm ({
-      point,
-      destinations,
-      offers,
-      onFormCancel: () => {
-        replaceEditFormToPoint();
-        document.removeEventListener('keydown', escKeyDownHandler);
-      },
-      onFormSubmit: () => {
-        replaceEditFormToPoint();
-        document.removeEventListener('keydown', escKeyDownHandler);
-      }});
+    this.#pointPresenters
+      .get(point.id)
+      .update(point);
+  };
 
-    function replacePointToEditForm() {
-      replace(pointEditComponent, pointComponent);
+  #renderPoint = (point) => {
+    const pointPresenter = new PointPresenter({
+      destinations: this.#pointModel.destinations,
+      offers: this.#pointModel.offers,
+      container: this.#pointsListComponent.element,
+      updatePoint: this.updatePoint,
+      changeEditingPoint: this.changeEditingPoint,
+    });
+    pointPresenter.init(point);
+    this.#pointPresenters.set(point.id, pointPresenter);
+  };
+
+  changeEditingPoint = (pointId) => {
+    if (pointId === null) {
+      this.#pointPresenters.get(this.editingPointId).disableEditMode();
+    } else {
+      this.#pointPresenters.get(this.editingPointId)?.disableEditMode();
+      this.#pointPresenters.get(pointId).enableEditMode();
     }
 
-    function replaceEditFormToPoint() {
-      replace(pointComponent, pointEditComponent);
-    }
+    this.editingPointId = pointId;
+  };
 
-    render(pointComponent, this.#pointsListComponent.element);
+  #clearPointsList() {
+    this.#pointPresenters.forEach((presenter) => presenter.removeComponent());
+    this.#pointPresenters.clear();
   }
+
+  #sortPoints(sortType) {
+    switch (sortType) {
+      case 'sort-day':
+        this.#pointModel.points.sort(sortByDay);
+        break;
+      case 'sort-time':
+        this.#pointModel.points.sort(sortByTime);
+        break;
+      case 'sort-price':
+        this.#pointModel.points.sort(sortByPrice);
+        break;
+    }
+    this.#currentSortType = sortType;
+  }
+
+  #onSortTypeChange = (sortType) => {
+    if (this.#currentSortType === sortType) {
+      return;
+    }
+    this.#sortPoints(sortType);
+    this.#clearPointsList();
+    this.#renderPoints();
+  };
 }
