@@ -55,5 +55,5 @@ export const destinations = [
         'description': 'Chamonix parliament building'
       }
     ]
-  }
+  },
 ];

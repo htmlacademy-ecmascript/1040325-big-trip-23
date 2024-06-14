@@ -84,7 +84,7 @@ export default class PointPresenter {
     this.#changeEditingPoint(null);
   };
 
-  #onFormSubmit() {
-
-  }
+  #onFormSubmit = (updatedPoint) => {
+    this.updatePoint(updatedPoint);
+  };
 }
