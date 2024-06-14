@@ -1,14 +1,14 @@
-import AbstractView from '../framework/view/abstract-view.js';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { capitalize } from '../helpers';
 import { EVENT_TYPES } from '../const';
 import { getDate } from '../helpers';
 import { DateFormats } from '../const.js';
 import { remove } from '../framework/render.js';
 
-const createTypesList = (pointId) => `<div class="event__type-wrapper">
+const createTypesList = (pointId, type) => `<div class="event__type-wrapper">
   <label class="event__type  event__type-btn" for="event-type-toggle-${pointId}">
     <span class="visually-hidden">Choose event type</span>
-    <img class="event__type-icon" width="17" height="17" src="img/icons/flight.png" alt="Event type icon">
+    <img class="event__type-icon" width="17" height="17" src="img/icons/${type}.png" alt="Event type icon">
   </label>
   <input class="event__type-toggle  visually-hidden" id="event-type-toggle-${pointId}" type="checkbox">
 
@@ -67,13 +67,13 @@ const createPointFormTemplate = (point, destinations, offers) => {
   const {basePrice, dateFrom, dateTo, type} = point;
   const pointDestination = destinations.find((item) => item.id === point.destination);
   const {name} = pointDestination || {};
-  const typeOffers = offers.find((item) => item.type === point.type).offers;
+  const typeOffers = offers.find((item) => item.type === point.type)?.offers;
   const pointId = point.id ?? 0;
 
   return `<li class="trip-events__item">
   <form class="event event--edit" action="#" method="post">
   <header class="event__header">
-    ${createTypesList(pointId)}
+    ${createTypesList(pointId, type)}
 
     <div class="event__field-group  event__field-group--destination">
       <label class="event__label  event__type-output" for="event-destination-${pointId}">
@@ -109,16 +109,17 @@ const createPointFormTemplate = (point, destinations, offers) => {
       </button>`
     : ''}
   </header>
+
   <section class="event__details">
-    ${typeOffers.length ? createPointOffersTemplate(typeOffers, point) : ''}
-  </section>
+    ${typeOffers?.length ? createPointOffersTemplate(typeOffers, point) : ''}
+
     ${pointDestination ? createPointDestinationTemplate(pointDestination) : ''}
   </section>
 </form>
 </li>`;
 };
 
-export default class PointForm extends AbstractView {
+export default class PointForm extends AbstractStatefulView {
   #point = null;
   #destinations = null;
   #offers = null;
@@ -133,14 +134,29 @@ export default class PointForm extends AbstractView {
     this.#handleFormClose = onFormClose;
     this.#handleFormSubmit = onFormSubmit;
 
-    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#formCloseHandler);
-    this.element.querySelector('.event__save-btn').addEventListener('click', this.#formSubmitHandler);
-
-    document.addEventListener('keydown', this.#escapeHandler);
+    this._setState(PointForm.parsePointToState(point));
+    this._restoreHandlers();
   }
 
   get template() {
-    return createPointFormTemplate(this.#point, this.#destinations, this.#offers);
+    return createPointFormTemplate(this._state, this.#destinations, this.#offers);
+  }
+
+  static parsePointToState(point) {
+    return { ...point };
+  }
+
+  static parseStateToPoint(state) {
+    const task = {...state};
+    return task;
+  }
+
+  _restoreHandlers() {
+    document.addEventListener('keydown', this.#escapeHandler);
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#formCloseHandler);
+    this.element.querySelector('.event__save-btn').addEventListener('click', this.#formSubmitHandler);
+    this.element.querySelector('.event__type-list').addEventListener('change', this.#onEventTypeChange);
+    this.element.querySelector('.event__input--destination').addEventListener('change', this.#onDestinationChange);
   }
 
   #formCloseHandler = (evt) => {
@@ -150,7 +166,7 @@ export default class PointForm extends AbstractView {
 
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
-    this.#handleFormSubmit();
+    this.#handleFormSubmit(PointForm.parseStateToPoint(this._state));
   };
 
   #escapeHandler = (event) => {
@@ -162,5 +178,14 @@ export default class PointForm extends AbstractView {
   remove = () => {
     remove(this);
     document.removeEventListener('keydown', this.#escapeHandler);
+  };
+
+  #onEventTypeChange = (evt) => {
+    this.updateElement({type: evt.target.value});
+  };
+
+  #onDestinationChange = (evt) => {
+    const newDestination = this.#destinations.find((destination) => destination.name === evt.target.value);
+    this.updateElement({destination: newDestination.id});
   };
 }
