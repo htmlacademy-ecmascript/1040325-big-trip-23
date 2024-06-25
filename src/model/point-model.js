@@ -1,4 +1,4 @@
-import { points } from '../mock/points';
+import { points, id } from '../mock/points';
 import { destinations } from '../mock/destinations';
 import { offers } from '../mock/offers';
 import { FilterTypes } from '../const';
@@ -36,5 +36,16 @@ export default class PointModel {
     this.#points = this.#points.map((item) =>
       item.id === point.id ? point : item
     );
+  }
+
+  addPoint(newPoint) {
+    const point = { ...newPoint, id: id.getId() };
+    this.#points.push(point);
+    return point;
+  }
+
+  deletePoint(point) {
+    const newPoints = this.#points.filter((item) => item.id !== point.id);
+    this.#points = newPoints;
   }
 }

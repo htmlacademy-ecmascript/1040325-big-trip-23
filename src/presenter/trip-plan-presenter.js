@@ -2,9 +2,10 @@ import FilterForm from '../view/filter';
 import SortForm from '../view/sort';
 import PointsList from '../view/points-list';
 import EmptyPointsListView from '../view/empty-points-list.js';
-import { render } from '../framework/render.js';
+import { render, RenderPosition } from '../framework/render.js';
 import PointPresenter from './point-presenter.js';
 import { sortByDay, sortByTime, sortByPrice } from '../helpers.js';
+import { getDefaultPoint } from '../mock/points.js';
 
 export default class TripPlanPresenter {
   #pointsListComponent = new PointsList();
@@ -14,16 +15,20 @@ export default class TripPlanPresenter {
   #pointPresenters = new Map();
   editingPointId = null;
   #currentSortType = 'sort-day';
+  #newPointButton = null;
+  #newPointPresenter = null;
 
-  constructor(headerContainer, mainContainer, pointModel) {
+  constructor(headerContainer, mainContainer, pointModel, newPointButton) {
     this.#filterContainer = headerContainer;
     this.#eventsContainer = mainContainer;
     this.#pointModel = pointModel;
+    this.#newPointButton = newPointButton;
   }
 
   init() {
     render(new FilterForm(), this.#filterContainer);
     this.#renderPointsList();
+    this.#newPointButton.addEventListener('click', this.#onNewEventClick);
   }
 
   #renderPointsList() {
@@ -70,9 +75,28 @@ export default class TripPlanPresenter {
       container: this.#pointsListComponent.element,
       updatePoint: this.updatePoint,
       changeEditingPoint: this.changeEditingPoint,
+      deletePoint: this.#deletePoint,
     });
     pointPresenter.init(point);
     this.#pointPresenters.set(point.id, pointPresenter);
+  };
+
+  #onNewEventClick = () => {
+    this.#newPointPresenter = new PointPresenter({
+      destinations: this.#pointModel.destinations,
+      offers: this.#pointModel.offers,
+      container: this.#pointsListComponent.element,
+      updatePoint: this.updatePoint,
+      changeEditingPoint: this.#onCancelButton,
+
+    });
+    this.#newPointPresenter.init(getDefaultPoint(), RenderPosition.AFTERBEGIN);
+    this.#newPointPresenter.enableEditMode();
+  };
+
+  #onCancelButton = () => {
+    this.#newPointPresenter.removeComponent();
+    this.#newPointPresenter = null;
   };
 
   changeEditingPoint = (pointId) => {
@@ -113,5 +137,10 @@ export default class TripPlanPresenter {
     this.#sortPoints(sortType);
     this.#clearPointsList();
     this.#renderPoints();
+  };
+
+  #deletePoint = (deletedPoint) => {
+    this.#pointPresenters.get(deletedPoint.id).removeComponent();
+    this.#pointModel.deletePoint(deletedPoint);
   };
 }

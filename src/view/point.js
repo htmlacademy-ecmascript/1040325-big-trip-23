@@ -9,7 +9,7 @@ const createPointTemplate = (point, destinations, offers) => {
 
   const pointDestination = destinations.find((item) => item.id === point.destination).name;
   const typeOffers = offers.find((item) => item.type === point.type).offers;
-  const pointOffers = typeOffers.filter((item) => point.offers.includes(item.id));
+  const pointOffers = typeOffers?.filter((item) => point.offers.includes(item.id));
 
   return `<li class="trip-events__item">
   <div class="event">

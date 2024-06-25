@@ -4,6 +4,8 @@ import { EVENT_TYPES } from '../const';
 import { getDate } from '../helpers';
 import { DateFormats } from '../const.js';
 import { remove } from '../framework/render.js';
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
 
 const createTypesList = (pointId, type) => `<div class="event__type-wrapper">
   <label class="event__type  event__type-btn" for="event-type-toggle-${pointId}">
@@ -68,7 +70,7 @@ const createPointFormTemplate = (point, destinations, offers) => {
   const pointDestination = destinations.find((item) => item.id === point.destination);
   const {name} = pointDestination || {};
   const typeOffers = offers.find((item) => item.type === point.type)?.offers;
-  const pointId = point.id ?? 0;
+  const pointId = point.id ?? 'new-point';
 
   return `<li class="trip-events__item">
   <form class="event event--edit" action="#" method="post">
@@ -102,12 +104,12 @@ const createPointFormTemplate = (point, destinations, offers) => {
     </div>
 
     <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-    <button class="event__reset-btn" type="reset">${point.id ? 'Delete' : 'Cancel'}</button>
-    ${point.id
-    ? `<button class="event__rollup-btn" type="button">
+    <button class="event__reset-btn" type="reset">${pointId === 'new-point' ? 'Cancel' : 'Delete'}</button>
+    ${pointId === 'new-point'
+    ? ''
+    : `<button class="event__rollup-btn" type="button">
         <span class="visually-hidden">Open event</span>
-      </button>`
-    : ''}
+      </button>`}
   </header>
 
   <section class="event__details">
@@ -125,14 +127,17 @@ export default class PointForm extends AbstractStatefulView {
   #offers = null;
   #handleFormClose = null;
   #handleFormSubmit = null;
+  #datepicker = null;
+  #onDeletePoint = null;
 
-  constructor({point, destinations, offers, onFormClose, onFormSubmit}) {
+  constructor({point, destinations, offers, onFormClose, onFormSubmit, onDeletePoint}) {
     super();
     this.#point = point;
     this.#destinations = destinations;
     this.#offers = offers;
     this.#handleFormClose = onFormClose;
     this.#handleFormSubmit = onFormSubmit;
+    this.#onDeletePoint = onDeletePoint;
 
     this._setState(PointForm.parsePointToState(point));
     this._restoreHandlers();
@@ -153,10 +158,20 @@ export default class PointForm extends AbstractStatefulView {
 
   _restoreHandlers() {
     document.addEventListener('keydown', this.#escapeHandler);
-    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#formCloseHandler);
+    this.element.querySelector('.event__rollup-btn')?.addEventListener('click', this.#formCloseHandler);
     this.element.querySelector('.event__save-btn').addEventListener('click', this.#formSubmitHandler);
     this.element.querySelector('.event__type-list').addEventListener('change', this.#onEventTypeChange);
     this.element.querySelector('.event__input--destination').addEventListener('change', this.#onDestinationChange);
+    this.element.querySelector('.event__input--price').addEventListener('change', this.#onPriceChange);
+    this.element.querySelector('.event__reset-btn').addEventListener('click', this.#formCloseHandler);
+    if (this.#point.id) {
+      this.element.querySelector('.event__reset-btn').addEventListener('click', this.#deletePointHandler);
+    } else {
+      this.element.querySelector('.event__reset-btn').addEventListener('click', this.#formCloseHandler);
+    }
+
+    this.#setDatepicker('input[name=event-start-time]', this._state.dateFrom, this.#dateFromChangeHandler);
+    this.#setDatepicker('input[name=event-end-time]', this._state.dateTo, this.#dateToChangeHandler);
   }
 
   #formCloseHandler = (evt) => {
@@ -175,6 +190,10 @@ export default class PointForm extends AbstractStatefulView {
     }
   };
 
+  #deletePointHandler = () => {
+    this.#onDeletePoint(this.#point);
+  };
+
   remove = () => {
     remove(this);
     document.removeEventListener('keydown', this.#escapeHandler);
@@ -187,5 +206,28 @@ export default class PointForm extends AbstractStatefulView {
   #onDestinationChange = (evt) => {
     const newDestination = this.#destinations.find((destination) => destination.name === evt.target.value);
     this.updateElement({destination: newDestination.id});
+  };
+
+  #onPriceChange = (evt) => {
+    const newPrice = evt.target.value;
+    this.updateElement({basePrice: newPrice});
+  };
+
+  #setDatepicker = (input, defaultTime, handler) => {
+    this.#datepicker = flatpickr(this.element.querySelector(input), {
+      enableTime: true,
+      time_24hr: true, //eslint-disable-line
+      dateFormat: 'y/m/d H:i',
+      defaultDate: defaultTime,
+      onChange: handler,
+    });
+  };
+
+  #dateFromChangeHandler = ([newDate]) => {
+    this.updateElement({dateFrom: newDate});
+  };
+
+  #dateToChangeHandler = ([newDate]) => {
+    this.updateElement({dateTo: newDate});
   };
 }
