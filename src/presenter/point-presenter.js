@@ -8,19 +8,21 @@ export default class PointPresenter {
   #offers = null;
   #view = null;
   #changeEditingPoint = null;
+  #deletePoint = null;
 
-  constructor({ destinations, offers, container, updatePoint, changeEditingPoint }) {
+  constructor({ destinations, offers, container, updatePoint, changeEditingPoint, deletePoint }) {
     this.#pointsListComponent = container;
     this.updatePoint = updatePoint;
     this.#destinations = destinations;
     this.#offers = offers;
     this.#changeEditingPoint = changeEditingPoint;
+    this.#deletePoint = deletePoint;
   }
 
-  init(point) {
+  init(point, renderPosition) {
     this.point = point;
     this.#view = this.createPointView();
-    render(this.#view, this.#pointsListComponent);
+    render(this.#view, this.#pointsListComponent, renderPosition);
   }
 
   createPointView() {
@@ -43,7 +45,8 @@ export default class PointPresenter {
       destinations: this.#destinations,
       offers: this.#offers,
       onFormClose: this.#onFormClose,
-      onFormSubmit: this.#onFormSubmit
+      onFormSubmit: this.#onFormSubmit,
+      onDeletePoint: this.#onDeletePoint,
     });
   }
 
@@ -87,4 +90,9 @@ export default class PointPresenter {
   #onFormSubmit = (updatedPoint) => {
     this.updatePoint(updatedPoint);
   };
+
+  #onDeletePoint = (deletedPoint) => {
+    this.#deletePoint(deletedPoint);
+  };
+
 }

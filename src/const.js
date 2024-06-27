@@ -1,15 +1,5 @@
 export const EVENT_TYPES = ['taxi', 'bus', 'train', 'ship', 'drive', 'flight', 'check-in', 'sightseeing', 'restaurant'];
 
-export const getDefaultPoint = () => ({
-  'basePrice': 0,
-  'dateFrom': new Date().toISOString(),
-  'dateTo': new Date().toISOString(),
-  'destination': '',
-  'isFavorite': false,
-  'offers': [],
-  'type': EVENT_TYPES[0],
-});
-
 export const FilterTypes = {
   EVERYTHING: 'everything',
   FUTURE: 'future',
@@ -31,3 +21,13 @@ export const DateFormats = {
   DATE_TIME: 'YYYY-MM-DDTHH:mm',
   MONTH_DAY: 'MMM D',
 };
+
+export function idCounter() {
+  let id = 1;
+
+  return {
+    getId: function() {
+      return id++;
+    }
+  };
+}
